@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Словарь неполиткорректного английского</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --accent: #e74c3c;
+            --success: #27ae60;
+            --dark: #1e293b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            background: linear-gradient(rgba(248, 250, 252, 0), rgba(248, 250, 252, 0)), url('image.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* СТИЛИ ЗАГОЛОВКА */
+        .site-header {
+            text-align: center;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+            .site-header h1 {
+                font-size: 3rem;
+                color: var(--dark);
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+                margin: 0;
+                font-weight: 800;
+            }
+
+        .search-area {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin: 20px auto 30px auto;
+            z-index: 101;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 18px 25px;
+            font-size: 18px;
+            border: 3px solid var(--primary);
+            border-radius: 15px;
+            outline: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            background: white;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+            input[type="text"]:focus {
+                box-shadow: 0 15px 40px rgba(74, 144, 226, 0.3);
+            }
+
+        /* СТИЛИ ДЛЯ АВТОДОПОЛНЕНИЯ */
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            margin-top: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            max-height: 300px;
+            overflow-y: auto;
+            display: none; /* Скрыто по умолчанию */
+            z-index: 1000;
+        }
+
+        .autocomplete-item {
+            padding: 15px 25px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            font-size: 16px;
+            transition: background 0.2s;
+            text-align: left;
+        }
+
+            .autocomplete-item:last-child {
+                border-bottom: none;
+            }
+
+            .autocomplete-item:hover {
+                background: #f0f7ff;
+                color: var(--primary);
+            }
+
+        /* КАРТОЧКА РЕЗУЛЬТАТА */
+        .card {
+            display: none;
+            background: white;
+            width: 100%;
+            max-width: 900px;
+            border-radius: 20px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            margin-bottom: 50px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-content {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .col {
+            padding: 30px 20px;
+            flex: 1;
+            border-right: 1px solid var(--border);
+        }
+
+            .col:last-child {
+                border-right: none;
+                flex: 1.5;
+            }
+
+        .label {
+            font-size: 11px;
+            font-weight: 900;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .word-title {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--accent);
+            margin: 0;
+        }
+
+        .replacement {
+            font-size: 20px;
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        @media (max-width: 600px) {
+            .site-header h1 {
+                font-size: 1.8rem;
+            }
+
+            .card-content {
+                flex-direction: column;
+            }
+
+            .col {
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="site-header">
+        <h1>Словарь неполиткорректного английского языка</h1>
+    </header>
+
+    <div class="search-area">
+        <input type="text" id="searchInput" placeholder="Нажмите, чтобы увидеть все слова..." autocomplete="off">
+        <div id="autocompleteList" class="autocomplete-list"></div>
+    </div>
+
+    <div id="card" class="card">
+        <div class="card-content">
+            <div class="col">
+                <span class="label">Оригинал</span>
+                <h2 class="word-title" id="res-word"></h2>
+                <div id="res-label" style="font-size: 12px; color: #64748b; font-weight: bold; margin-top: 5px;"></div>
+            </div>
+            <div class="col">
+                <span class="label">Перевод</span>
+                <div id="res-translation" style="font-size: 18px;"></div>
+            </div>
+            <div class="col">
+                <span class="label">Корректная замена</span>
+                <div class="replacement" id="res-replacement"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>const dictionary = {
+            "actress": { label: "сексизм", translation: "актриса театра", replacement: "Actor / Actron" },
+            "indian": { label: "расовая дискриминация", translation: "америнд, индеец", replacement: "Native American" },
+            "blind": { label: "аблеизм", translation: "слепой", replacement: "Visually challenged" },
+            "businessman": { label: "сексизм", translation: "бизнесмен, делец", replacement: "Business person" },
+            "cleaner": { label: "непрестижная профессия", translation: "уборщик, уборщица", replacement: "Sanitation engineer" },
+            "dead": { label: "страшные явления", translation: "мертвый, дохлый", replacement: "Deceased, the late" },
+            "die": { label: "страшные явления", translation: "умирать", replacement: "Decease, pass away" },
+            "fat": { label: "лукизм", translation: "жирный, толстый", replacement: "Big-boned, horizontally challenged" },
+            "foreigner": { label: "социальный статус", translation: "иноземец, иностранец", replacement: "Newcomer, alien" },
+            "gnome": { label: "лукизм", translation: "маленький человек", replacement: "Little person" },
+            "mrs": { label: "социальный статус", translation: "миссис, госпожа", replacement: "Ms" },
+            "old": { label: "эйджизм", translation: "старый, старческий", replacement: "Senior, mature, seasoned" },
+            "pet": { label: "влияние на фауну", translation: "питомец, животное", replacement: "Animal companion" },
+            "poor": { label: "влияние государства", translation: "бедный, малоимущий", replacement: "Needy, underprivileged" },
+            "poverty": { label: "влияние государства", translation: "бедность, нищета", replacement: "Low income" },
+            "prison": { label: "учреждения государственного надзора", translation: "тюрьма, темница", replacement: "Correctional facilities" },
+            "secretary": { label: "непрестижная профессия", translation: "секретарь, помощник", replacement: "Personal assistant" },
+            "servant": { label: "непрестижная профессия", translation: "слуга, прислуга", replacement: "Housekeeper, help" },
+            "short": { label: "сайсизм", translation: "низкий, невысокий", replacement: "Vertically challenged" },
+            "sick": { label: "неприятные явления", translation: "больной", replacement: "Temporary disabled" },
+            "stupid": { label: "аблеизм", translation: "глупый, тупой", replacement: "Learning disabled" },
+            "ugly": { label: "лукизм", translation: "уродливый", replacement: "Aesthetically challenged" },
+            "war": { label: "влияние государства", translation: "война", replacement: "Military conflict" }
+        };
+
+        const searchInput = document.getElementById('searchInput');
+        const autocompleteList = document.getElementById('autocompleteList');
+        const card = document.getElementById('card');
+
+        // Функция отображения списка
+        function showSuggestions(filter = "") {
+            autocompleteList.innerHTML = "";
+            const keys = Object.keys(dictionary);
+
+            const filteredKeys = keys.filter(key =>
+                key.toLowerCase().includes(filter.toLowerCase())
+            );
+
+            if (filteredKeys.length > 0) {
+                autocompleteList.style.display = "block";
+                filteredKeys.sort().forEach(key => {
+                    const item = document.createElement('div');
+                    item.className = 'autocomplete-item';
+                    item.textContent = key;
+                    item.onclick = () => selectWord(key);
+                    autocompleteList.appendChild(item);
+                });
+            } else {
+                autocompleteList.style.display = "none";
+            }
+        }
+
+        // Выбор слова
+        function selectWord(word) {
+            const data = dictionary[word];
+            searchInput.value = word;
+            autocompleteList.style.display = "none";
+
+            document.getElementById('res-word').textContent = word;
+            document.getElementById('res-label').textContent = `[${data.label}]`;
+            document.getElementById('res-translation').textContent = data.translation;
+            document.getElementById('res-replacement').textContent = data.replacement;
+
+            card.style.display = "block";
+        }
+
+        // Показать все при клике
+        searchInput.addEventListener('focus', () => showSuggestions(searchInput.value));
+
+        // Фильтрация при вводе
+        searchInput.addEventListener('input', (e) => showSuggestions(e.target.value));
+
+        // Закрыть список при клике вне его
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-area')) {
+                autocompleteList.style.display = "none";
+            }
+        });</script>
+</body>
+</html>
